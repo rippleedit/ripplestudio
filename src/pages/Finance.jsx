@@ -1,10 +1,11 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import Icon from '../lib/icons.jsx'
 import MonthBars, { lastMonths } from '../components/MonthBars.jsx'
 import PaymentDialog, { invoiceText } from '../components/PaymentDialog.jsx'
 import { Code, Avatar, Block, Empty, Search, Segmented, Tag, Tile } from '../components/UI.jsx'
 import { money, monthLabel, relativeDays, shortDate, toDate, today, usd } from '../lib/format.js'
 import { byLane, deliveredOn, workDate } from '../lib/projects.js'
+import { estimateNote, euroEstimate } from '../lib/rates.js'
 
 const PERIODS = [['month', 'Month'], ['quarter', 'Quarter'], ['year', 'Year'], ['all', 'All time']]
 
@@ -57,8 +58,25 @@ const localDay = (value) => {
 }
 
 // Payments read from PayPal, waiting for you to say what they were for.
+const euros = (value) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(Number(value || 0))
+const needsEstimate = (item) => item.received_eur == null && item.currency !== 'EUR'
+
 function PaypalInbox({ items, clients, actions, onMatch }) {
   const [state, setState] = useState('')
+  // Payments PayPal has not converted get a euro value at the day's ECB rate.
+  const [estimates, setEstimates] = useState({})
+  useEffect(() => {
+    let alive = true
+    for (const item of items.filter(needsEstimate)) {
+      euroEstimate(item).then((estimate) => { if (alive) setEstimates((current) => ({ ...current, [item.id]: estimate })) }).catch(() => {})
+    }
+    return () => { alive = false }
+  }, [items])
+  const match = async (item) => {
+    let estimate = estimates[item.id]
+    if (!estimate && needsEstimate(item)) { try { estimate = await euroEstimate(item) } catch { /* open without an estimate */ } }
+    onMatch({ ...item, estimate })
+  }
   const checkNow = async () => {
     setState('Checking PayPal…')
     try {
@@ -72,14 +90,17 @@ function PaypalInbox({ items, clients, actions, onMatch }) {
     {items.length ? <div className="ptable ledger-due">
       {items.map((item) => {
         const client = clients.get(Number(item.client_id))
+        const estimate = estimates[item.id]
         return <div className="ptable-row ptable-project is-static" key={item.id}>
           <span className="c-client">{client ? <><Avatar name={client.name} size="sm"/><span>{client.name}</span></> : <span>{item.payer_name || item.payer_email || 'Unknown sender'}</span>}</span>
           <span className="c-projects"><span className="paypal-from">{[client ? (item.payer_name || item.payer_email) : item.payer_email, item.note].filter(Boolean).join(' · ')}</span></span>
           <span className="c-date">{shortDate(item.happened_at)}</span>
-          <span className="c-amount">{item.received_eur != null ? money(item.received_eur) : `${item.gross} ${item.currency}`}</span>
+          <span className="c-amount" title={estimate ? `Estimated: ${estimateNote(item, estimate)}` : undefined}>
+            {item.received_eur != null ? euros(item.received_eur) : estimate ? `≈ ${euros(estimate.eur)}` : `${Number(item.gross).toFixed(2)} ${item.currency}`}
+          </span>
           <span className="c-action paypal-actions">
             <button type="button" className="text-button" onClick={() => actions.dismissPaypal(item.id)}>Dismiss</button>
-            <button type="button" className="button button--small" onClick={() => onMatch(item)}>Match</button>
+            <button type="button" className="button button--small" onClick={() => match(item)}>Match</button>
           </span>
         </div>
       })}
@@ -266,10 +287,11 @@ export default function Finance({ data, actions }) {
     {matching && <PaymentDialog
       payment={{
         client_id: matching.client_id || '',
-        amount: matching.received_eur ?? '',
+        amount: matching.received_eur ?? matching.estimate?.eur ?? '',
         date: localDay(matching.happened_at),
-        notes: [`PayPal · ${matching.payer_name || matching.payer_email || 'unknown sender'}`, matching.note].filter(Boolean).join(' · '),
+        notes: [`PayPal · ${matching.payer_name || matching.payer_email || 'unknown sender'}`, matching.estimate && estimateNote(matching, matching.estimate), matching.note].filter(Boolean).join(' · '),
       }}
+      amountHint={matching.estimate ? `Estimated from ${estimateNote(matching, matching.estimate)}. Adjust if PayPal's conversion differs.` : undefined}
       data={data}
       actions={actions}
       save={(values) => actions.matchPaypal(matching, values)}

@@ -129,8 +129,8 @@ for (const [id, , , , status, service, , , received, , delivered, , , tracked] o
 }
 
 // Two PayPal payments waiting to be matched: one from a sender already known as a
-// client (paid in dollars, converted), one from someone new.
+// client (paid in dollars and not converted, so Finance estimates the euros), one from someone new.
 export const demoPaypal = [
-  { id: 'DEMO-PP-2', happened_at: at(1, 16).toISOString(), payer_email: 'team@harborsound.example', payer_name: 'Harbor Sound', gross: 162.5, fee: -6.21, currency: 'USD', received_eur: 139.4, note: 'Loop Kit Walkthrough', client_id: 1, status: 'new', payment_id: null },
+  { id: 'DEMO-PP-2', happened_at: at(1, 16).toISOString(), payer_email: 'team@harborsound.example', payer_name: 'Harbor Sound', gross: 162.5, fee: -6.21, currency: 'USD', received_eur: null, note: 'Loop Kit Walkthrough', client_id: 1, status: 'new', payment_id: null },
   { id: 'DEMO-PP-1', happened_at: at(3, 9).toISOString(), payer_email: 'j.rivera@example.com', payer_name: 'Jordan Rivera', gross: 60, fee: -2.46, currency: 'EUR', received_eur: 57.54, note: null, client_id: null, status: 'new', payment_id: null },
 ]

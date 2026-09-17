@@ -20,7 +20,7 @@ export function invoiceText(payment, data) {
   ].join('\n')
 }
 
-export default function PaymentDialog({ payment, data, actions, onClose, save }) {
+export default function PaymentDialog({ payment, data, actions, onClose, save, amountHint }) {
   const isNew = !payment?.id
   const [form, setForm] = useState(() => ({
     client_id: '', amount: '', currency: 'EUR', date: today(), invoice_number: '', notes: '',
@@ -91,6 +91,7 @@ export default function PaymentDialog({ payment, data, actions, onClose, save })
         <label className="field">
           <span className="field-label">Amount received · {form.currency || 'EUR'}</span>
           <input className="input input--mono" type="number" min="0" step="0.01" inputMode="decimal" required value={form.amount} onChange={(event) => set({ amount: event.target.value })}/>
+          {amountHint && <span className="field-hint">{amountHint}</span>}
         </label>
         <label className="field">
           <span className="field-label">Date received</span>

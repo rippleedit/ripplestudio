@@ -190,7 +190,11 @@ export const api = {
   async loadPaypal() {
     if (demoMode) return delay(demo.paypal)
     const { data, error } = await supabase.from('paypal_transactions').select('*').eq('status', 'new').order('happened_at', { ascending: false }).limit(200)
-    return error ? [] : data // not set up yet: nothing to show
+    if (error) return [] // not set up yet: nothing to show
+    // Suggest the client for any sender matched before, even one learned after this payment was stored.
+    const { data: senders } = await supabase.from('paypal_senders').select('email, client_id')
+    const clientFor = new Map((senders || []).map((sender) => [sender.email, sender.client_id]))
+    return data.map((row) => ({ ...row, client_id: row.client_id ?? clientFor.get(row.payer_email) ?? null }))
   },
   async syncPaypal() {
     if (demoMode) return delay({ ok: true, added: 0, recognised: 0 })
