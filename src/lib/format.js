@@ -11,7 +11,8 @@ export const toDate = (value) => {
 export const shortDate = (value) => (value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(toDate(value)) : '')
 
 export const money = (value, currency = 'EUR') => new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'en-GB', {
-  style: 'currency', currency, maximumFractionDigits: 0,
+  // Always the full amount, cents included: these are the books.
+  style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(value || 0))
 
 export const usd = (value) => money(value, 'USD')
