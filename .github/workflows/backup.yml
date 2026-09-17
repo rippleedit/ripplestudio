@@ -1,0 +1,18 @@
+name: Weekly private backup
+on:
+  schedule:
+    - cron: '33 7 * * 0'
+  workflow_dispatch:
+jobs:
+  backup:
+    # Paused until the Dropbox backup is set up (repository variable BACKUP_READY=true).
+    if: vars.BACKUP_READY == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Export Supabase to Dropbox
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/backup" \
+            -H "x-backup-token: ${{ secrets.BACKUP_TOKEN }}" \
+            -H "Content-Type: application/json"
+

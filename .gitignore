@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+local/
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
+
+
+# Agent notes and editor settings stay private
+AGENTS.md
+BRIEF.md
+.claude/

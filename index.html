@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADC0lEQVRYhc2XzUsbURDAf5tEjYpfgYrYSrFeRFqK1HNBRFoCwZsHGwUPnnqxPXjqn1Ba/wAPQi16za09eOlBEKqoFREMHgzRQC6SRIKfW2bZ3W6yn6Ha+oMJ2cx7M5P3ZmbfUwjOA+AV8BJ4BjwEWnVdAcgCv4AfwHcgzy3xFFgASoAaUEr6HJn7V3yswambiI2aeQLs3IJzQ3Z0m4F4DhRv0bkhRd22J4+A8h04N6Ss+3AlfYfODREfJmHL909A3KqMRqNEIpEKubm5QVXFjp36+noURdHGeBAD2vRSNXlsjVJRFHVxcVHN5/M2yWQy6tLSkhqLxczxnZ2d6srKiprL5dRsNqsODw8HWQnxafLFqoxGo6of6XTaHH90dFShm5+fDxKA+CSid7M3f2KBUChEsVikpaUFN/r6+hgcHKSpqYmenp4KXbksueaL+HwrAYwBilVzeXnp6dxgaGiIhoYG2+8yPwDic0wCGHEyMD4+zujoqJZUBufn5xweHnJ9fa09r66uEg6HmZ2dNcecnZ2xsCBdOBAjYv0n8CLojIGBAdraJIlhb29P267+/n5TL8F1d3fT3t6uPUvFrK2tcXBw4GRuQz6Og9ZwMpmsSLaJiQl1enraN2GlOiKRiJPNYyMJA9Hb22tLNmM7vOjo6KCuro6rq6tqVWuIGpD9tiLLL+KHNCg3QvphIhCbm5u2AKqDcmJra4uLiwsnVaHmJJSyM0r09PRUqxIjKa1IO5ZeIf9+e3ubUknOKDY2JAd23QIQZ3Nzc1pWC7LfmUzGrPNUKqWtQiKRsM09OTlheXnZ7//sysekW9bH43HP7J6amlJnZmZc9YlEwq+yJmUFUvpDRTcUmpubPcMvFAqeCeYzX3ymjCT86jTCL8Fki+SV7Ya8vj0QnwVjxAcgWT1ifX2d/f19urq6PFdAkrGaXC6ndUAPxCdK1YHkXS1Labz1GhsbbTp5J3jwGXjvpPjnR7J7dyj978fye3ExuRdXMyzc6eXU1v08kOv5a/16LoadrufS2+V6/i3o9fw3s0Koz3Wc5LoAAAAASUVORK5CYII=" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>RippleStudio</title>
+  </head>
+  <body>
+    <script>
+      const redirect = sessionStorage.getItem('spa-redirect')
+      if (redirect) {
+        sessionStorage.removeItem('spa-redirect')
+        const next = new URL(redirect)
+        history.replaceState(null, '', next.pathname + next.search + next.hash)
+      }
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

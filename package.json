@@ -1,0 +1,24 @@
+{
+  "name": "ripplestudio-online",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "migrate": "node --env-file=local/migration.env scripts/migrate-sqlite.mjs",
+    "verify:anon": "node --env-file=local/supabase.env scripts/verify-anon.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "better-sqlite3": "^13.0.3",
+    "vite": "^8.3.0"
+  }
+}
