@@ -36,6 +36,34 @@ export const auth = {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session))
     return () => data.subscription.unsubscribe()
   },
+
+  // Two-step login with an authenticator app.
+  async assurance() {
+    if (demoMode) return { current: 'aal1', next: 'aal1' }
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (error) throw error
+    return { current: data.currentLevel, next: data.nextLevel }
+  },
+  async factors() {
+    if (demoMode) return []
+    const { data, error } = await supabase.auth.mfa.listFactors()
+    if (error) throw error
+    return (data.all || []).filter((factor) => factor.factor_type === 'totp')
+  },
+  async enroll() {
+    // Clear any half-finished setup first, so a fresh QR code can be made.
+    for (const factor of await auth.factors()) {
+      if (factor.status !== 'verified') await supabase.auth.mfa.unenroll({ factorId: factor.id })
+    }
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `Authenticator ${Date.now()}` })
+    if (error) throw error
+    return { id: data.id, qr: data.totp.qr_code, secret: data.totp.secret }
+  },
+  async verify(factorId, code) {
+    const { data, error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code })
+    if (error) throw error
+    return data
+  },
 }
 
 // Supabase hands out at most 1,000 rows per request (its default "max rows"),

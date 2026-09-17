@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import Dialog from './Dialog.jsx'
 import Icon from '../lib/icons.jsx'
 import { squareJpeg } from './PictureField.jsx'
+import TwoStepSetup from './TwoStepSetup.jsx'
 import { Avatar } from './UI.jsx'
 
 // "Your profile", as in RippleReview: picture, display name, sign out.
@@ -57,6 +58,8 @@ export default function ProfileDialog({ profile, demo, onSave, onSignOut, onClos
       <input className="input" value={name} placeholder="e.g. Razz" maxLength={40} autoComplete="off" onChange={(event) => setName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') save() }}/>
       <span className="field-hint">Shown in the sidebar and in your greeting on Home.</span>
     </label>
+
+    <TwoStepSetup demo={demo}/>
 
     <div className="sheet-divider"/>
     <button type="button" className="button button--wide" onClick={async () => { onClose(); await onSignOut() }}><Icon name="logout" size={15}/>Sign out</button>

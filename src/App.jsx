@@ -16,6 +16,7 @@ export default function App() {
   const [session, setSession] = useState(undefined)
   const [data, setData] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [needsCode, setNeedsCode] = useState(null)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
@@ -27,17 +28,22 @@ export default function App() {
     auth.session().then(setSession)
     return auth.onChange(setSession)
   }, [])
-  useEffect(() => { if (session) load(); else setData(null) }, [session, load])
+  // Two-step login: once an authenticator is set up, a password alone does not open the studio.
+  useEffect(() => {
+    if (!session) { setNeedsCode(null); return }
+    auth.assurance().then(({ current, next }) => setNeedsCode(next === 'aal2' && current !== 'aal2')).catch(() => setNeedsCode(false))
+  }, [session])
+  useEffect(() => { if (session && needsCode === false) load(); else setData(null) }, [session, needsCode, load])
 
   // PayPal is checked quietly in the background whenever you open Studio, at most every ten minutes.
   useEffect(() => {
-    if (!session || demoMode) return
+    if (!session || demoMode || needsCode !== false) return
     try {
       if (Date.now() - Number(localStorage.getItem('paypal-checked') || 0) < 10 * 60000) return
       localStorage.setItem('paypal-checked', String(Date.now()))
     } catch { /* storage blocked: check anyway */ }
     api.syncPaypal().then((result) => { if (result?.added || result?.recognised) load() }).catch(() => {})
-  }, [session, load])
+  }, [session, needsCode, load])
   useEffect(() => {
     if (!session) { setProfile(null); return }
     api.profile().then(setProfile).catch(() => setProfile({ display_name: 'Razz', avatar: null, email: session.user?.email }))
@@ -78,6 +84,8 @@ export default function App() {
 
   if (session === undefined) return <div className="signin"><Spinner label="Opening RippleStudio"/></div>
   if (!session) return <Login onSignedIn={(next) => setSession(next)} demo={demoMode}/>
+  if (needsCode === null) return <div className="signin"><Spinner label="Opening RippleStudio"/></div>
+  if (needsCode) return <Login mode="code" onSignOut={signOut}/>
   if (!data) return <div className="signin">{error ? <p className="form-error">{error}</p> : <Spinner label="Loading your studio"/>}</div>
 
   registerClients(data.clients)

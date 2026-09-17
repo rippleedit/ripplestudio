@@ -128,6 +128,12 @@ img { display: block; max-width: 100%; }
 .sheet-divider { height: 1px; margin: 1.3rem 0 1rem; background: var(--white-08); }
 .button.button--wide { width: 100%; justify-content: flex-start; gap: 0.6rem; color: var(--white-76); }
 .button.button--wide:hover { transform: none; color: var(--white); }
+.two-step { margin-top: 1.3rem; }
+.two-step-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; }
+.two-step-setup { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; }
+.two-step-qr { padding: 8px; border-radius: 8px; background: #fff; }
+.two-step-steps { display: grid; flex: 1; gap: 0.6rem; min-width: 220px; }
+.two-step code { font-family: var(--font-mono); color: var(--white-76); overflow-wrap: anywhere; }
 .side-foot-icon { margin-left: auto; color: var(--white-28); }
 .side-foot:hover .side-foot-icon { color: var(--white-76); }
 
