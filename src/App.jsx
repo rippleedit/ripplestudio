@@ -66,6 +66,8 @@ export default function App() {
     async updateTimer(id, values) { await api.updateTimer(id, values); await load() },
     async stopTimer(id, seconds) { await api.updateTimer(id, { ended_at: new Date().toISOString(), duration_seconds: seconds, paused_at: null }); await load() },
     async addTime(values) { await api.addTime(values); await load() },
+    async updateTime(id, values) { await api.updateTime(id, values); await load() },
+    async deleteTime(id) { await api.deleteTime(id); await load() },
     async syncPaypal() { const result = await api.syncPaypal(); await load(); return result },
     async matchPaypal(item, values) {
       const saved = await api.savePayment(values)

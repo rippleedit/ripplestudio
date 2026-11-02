@@ -2,85 +2,145 @@ import { Fragment, useMemo, useState } from 'react'
 import Dialog from '../components/Dialog.jsx'
 import Icon from '../lib/icons.jsx'
 import { Avatar, clientColor, Code, Empty, Search, Segmented, Switch } from '../components/UI.jsx'
-import { duration, today } from '../lib/format.js'
-import { isOpen, pieceLabel, pieceOf, secondsThisWeek, stageColor, STAGES, trackedPieces, trackedSeconds } from '../lib/projects.js'
+import { dayValue, duration, shortDate, toDate, today } from '../lib/format.js'
+import { isOpen, pieceLabel, pieceOf, secondsThisWeek, stageColor, stageLabel, STAGES, trackedPieces, trackedSeconds } from '../lib/projects.js'
 
 const byJobCode = (a, b) => String(b.project_id || '').localeCompare(String(a.project_id || ''), undefined, { numeric: true })
 const stageTotals = (entries) => STAGES
   .map(([stage, name]) => ({ stage, name, seconds: trackedSeconds(entries.filter((entry) => entry.stage === stage)) }))
   .filter((row) => row.seconds !== 0)
 
-function ManualTime({ projects, onClose, onSave }) {
-  const [form, setForm] = useState({ project_id: projects[0]?.id ?? '', vsl_item: '', stage: 'rough_cut', date: today(), minutes: '30', note: '' })
+// A duration as the app writes it: hours and minutes.
+const splitDuration = (seconds) => {
+  const total = Math.max(0, Math.round(Number(seconds || 0)))
+  return { hours: String(Math.floor(total / 3600)), minutes: String(Math.round((total % 3600) / 60)) }
+}
+
+// Moving a session to another day keeps its time of day, so it stays where it sat.
+function startedAtFor(date, entry) {
+  if (!entry) return new Date(`${date}T12:00:00`)
+  const [year, month, day] = date.split('-').map(Number)
+  const moved = new Date(toDate(entry.started_at))
+  moved.setFullYear(year, month - 1, day)
+  return moved
+}
+
+// One form for both jobs: logging time by hand, and correcting a session already
+// logged — a timer left running overnight, or a stage picked wrongly.
+function TimeDialog({ entry, projects, actions, onClose }) {
+  const isNew = !entry
+  const [form, setForm] = useState(() => ({
+    project_id: entry?.project_id ?? projects[0]?.id ?? '',
+    vsl_item: entry?.vsl_item || '',
+    stage: entry ? (entry.stage || '') : 'rough_cut',
+    date: entry ? dayValue(entry.started_at) : today(),
+    note: entry?.note || '',
+    ...splitDuration(isNew ? 1800 : entry.duration_seconds),
+  }))
   const [saving, setSaving] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState('')
   const set = (patch) => setForm((current) => ({ ...current, ...patch }))
   const project = projects.find((item) => String(item.id) === String(form.project_id))
   const pieces = project ? trackedPieces(project) : [null]
 
+  // A session timed at 1m 29s reads as "1m", so leaving that figure alone keeps its
+  // exact seconds; typing a new one takes you at your word.
+  const asLogged = splitDuration(entry?.duration_seconds)
+  const untouched = !isNew && form.hours === asLogged.hours && form.minutes === asLogged.minutes
+  const seconds = untouched
+    ? Math.max(0, Math.round(Number(entry.duration_seconds || 0)))
+    : Math.max(0, Math.round(Number(form.hours || 0)) * 3600 + Math.round(Number(form.minutes || 0)) * 60)
+
   const submit = async (event) => {
     event.preventDefault()
+    if (!(seconds > 0)) { setError('Give this session a length, or delete it.'); return }
     setSaving(true)
     setError('')
     try {
-      const seconds = Math.round(Number(form.minutes) * 60)
-      const started = new Date(`${form.date}T12:00:00`)
-      await onSave({
+      const started = startedAtFor(form.date, entry)
+      const values = {
         project_id: Number(form.project_id),
-        stage: form.stage,
+        stage: form.stage || null,
         vsl_item: pieces[0] ? (form.vsl_item || pieces[0]) : null,
         started_at: started.toISOString(),
-        ended_at: new Date(started.getTime() + Math.max(0, seconds) * 1000).toISOString(),
+        ended_at: new Date(started.getTime() + seconds * 1000).toISOString(),
         duration_seconds: seconds,
         note: form.note || null,
-        paused_seconds: 0,
-        adjustment_seconds: 0,
-      })
+      }
+      if (isNew) await actions.addTime({ ...values, paused_seconds: 0, adjustment_seconds: 0 })
+      else await actions.updateTime(entry.id, values)
       onClose()
     } catch (err) {
-      setError(err.message || 'Could not add this time.')
+      setError(err.message || 'Could not save this time.')
       setSaving(false)
     }
   }
 
-  return <Dialog title="Add time" onClose={onClose} footer={<>
-    {error && <span className="form-error">{error}</span>}
-    <button type="button" className="button" onClick={onClose}>Cancel</button>
-    <button type="submit" form="manual-time" className="button button--solid" disabled={saving || !projects.length}>{saving ? 'Adding…' : 'Add time'}</button>
-  </>}>
-    {projects.length ? <form id="manual-time" className="form-grid" onSubmit={submit}>
-      <label className="field span-2">
-        <span className="field-label">Project</span>
-        <select className="select" required value={form.project_id} onChange={(event) => set({ project_id: event.target.value, vsl_item: '' })}>
-          {projects.map((item) => <option key={item.id} value={item.id}>{item.project_id ? `${item.project_id} · ` : ''}{item.title}</option>)}
-        </select>
-      </label>
-      {pieces[0] && <label className="field span-2">
-        <span className="field-label">Piece</span>
-        <select className="select" value={form.vsl_item || pieces[0]} onChange={(event) => set({ vsl_item: event.target.value })}>
-          {pieces.map((key) => <option key={key} value={key}>{pieceLabel(key)}</option>)}
-        </select>
-      </label>}
-      <label className="field">
-        <span className="field-label">Stage</span>
-        <select className="select" value={form.stage} onChange={(event) => set({ stage: event.target.value })}>
-          {STAGES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-        </select>
-      </label>
-      <label className="field">
-        <span className="field-label">Minutes</span>
-        <input className="input input--mono" type="number" step="1" inputMode="numeric" required value={form.minutes} onChange={(event) => set({ minutes: event.target.value })}/>
-      </label>
-      <label className="field">
-        <span className="field-label">Date</span>
-        <input className="input" type="date" required value={form.date} onChange={(event) => set({ date: event.target.value })}/>
-      </label>
-      <label className="field span-2">
-        <span className="field-label">Note</span>
-        <input className="input" placeholder="Optional" value={form.note} onChange={(event) => set({ note: event.target.value })}/>
-      </label>
-    </form> : <p>Switch tracking on for a project first.</p>}
-  </Dialog>
+  return <>
+    <Dialog title={isNew ? 'Add time' : 'Edit time'} onClose={onClose} footer={<>
+      {!isNew && <button type="button" className="text-button text-button--danger push" onClick={() => setConfirming(true)}>Delete</button>}
+      {error && <span className="form-error">{error}</span>}
+      <button type="button" className="button" onClick={onClose}>Cancel</button>
+      <button type="submit" form="time-form" className="button button--solid" disabled={saving || !projects.length}>{saving ? 'Saving…' : isNew ? 'Add time' : 'Save'}</button>
+    </>}>
+      {projects.length ? <form id="time-form" className="form-grid" onSubmit={submit}>
+        <label className="field span-2">
+          <span className="field-label">Project</span>
+          <select className="select" required value={form.project_id} onChange={(event) => set({ project_id: event.target.value, vsl_item: '' })}>
+            {projects.map((item) => <option key={item.id} value={item.id}>{item.project_id ? `${item.project_id} · ` : ''}{item.title}</option>)}
+          </select>
+        </label>
+        {pieces[0] && <label className="field span-2">
+          <span className="field-label">Piece</span>
+          <select className="select" value={form.vsl_item || pieces[0]} onChange={(event) => set({ vsl_item: event.target.value })}>
+            {pieces.map((key) => <option key={key} value={key}>{pieceLabel(key)}</option>)}
+          </select>
+        </label>}
+        <label className="field">
+          <span className="field-label">Stage</span>
+          <select className="select" value={form.stage} onChange={(event) => set({ stage: event.target.value })}>
+            {!form.stage && <option value="">Unstaged</option>}
+            {STAGES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+          </select>
+        </label>
+        <label className="field">
+          <span className="field-label">Date</span>
+          <input className="input" type="date" required value={form.date} onChange={(event) => set({ date: event.target.value })}/>
+        </label>
+        <label className="field">
+          <span className="field-label">Hours</span>
+          <input className="input input--mono" type="number" min="0" step="1" inputMode="numeric" value={form.hours} onChange={(event) => set({ hours: event.target.value })}/>
+        </label>
+        <label className="field">
+          <span className="field-label">Minutes</span>
+          <input className="input input--mono" type="number" min="0" step="1" inputMode="numeric" value={form.minutes} onChange={(event) => set({ minutes: event.target.value })}/>
+        </label>
+        <p className="field-hint span-2">Counts as <strong>{duration(seconds)}</strong>{!isNew && !untouched && ` · the timer said ${duration(entry.duration_seconds)}`}</p>
+        <label className="field span-2">
+          <span className="field-label">Note</span>
+          <input className="input" placeholder="Optional" value={form.note || ''} onChange={(event) => set({ note: event.target.value })}/>
+        </label>
+      </form> : <p>Switch tracking on for a project first.</p>}
+    </Dialog>
+
+    {confirming && <Dialog title="Delete this time?" onClose={() => setConfirming(false)} footer={<>
+      <button type="button" className="button" onClick={() => setConfirming(false)}>Keep it</button>
+      <button type="button" className="button button--danger" onClick={async () => { await actions.deleteTime(entry.id); onClose() }}>Delete time</button>
+    </>}><p>{duration(entry.duration_seconds)} comes off this project. This cannot be undone.</p></Dialog>}
+  </>
+}
+
+// One timed session as it was logged. Clicking it opens the same form.
+function EntryRow({ entry, piece, onEdit }) {
+  return <button type="button" className="entry-row" onClick={() => onEdit(entry)}>
+    <span className="entry-when">{shortDate(entry.started_at)}</span>
+    <span className="entry-stage" style={{ '--c': stageColor(entry.stage) }}><i className="dot"/>{stageLabel(entry.stage)}</span>
+    {piece && <span className="entry-piece">{pieceLabel(piece)}</span>}
+    <span className="entry-note">{entry.note || ''}</span>
+    <span className="entry-time">{duration(entry.duration_seconds)}</span>
+    <Icon name="edit" size={13}/>
+  </button>
 }
 
 // Pick what you are about to work on; the timer takes over the screen from there.
@@ -102,11 +162,13 @@ function StartTimer({ project, entries, actions, onClose }) {
   </Dialog>
 }
 
-function TimeRow({ project, entries, view, locked, open, onToggle, onStart, actions }) {
+function TimeRow({ project, entries, view, locked, open, onToggle, onStart, onEdit, actions }) {
   const total = trackedSeconds(entries)
   const stages = stageTotals(entries).filter((row) => row.seconds > 0)
   const tracked = Boolean(project.track_time)
   const pieces = trackedPieces(project)
+  // Newest first, and never the timer still running: that one belongs to the overlay.
+  const sessions = entries.filter((entry) => entry.ended_at).sort((a, b) => toDate(b.started_at) - toDate(a.started_at))
   return <div className={`time-row ${open ? 'is-open' : ''} ${tracked ? '' : 'is-off'}`}>
     <div className="time-row-main" role="button" tabIndex={0} aria-expanded={open} onClick={onToggle} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onToggle() } }}>
       <span className="c-id"><Code project={project}/></span>
@@ -129,6 +191,12 @@ function TimeRow({ project, entries, view, locked, open, onToggle, onStart, acti
           {rows.length ? rows.map((row) => <span className="stage-chip" key={row.stage} style={{ '--c': stageColor(row.stage) }}><i className="dot"/><span>{row.name}</span><strong>{duration(row.seconds)}</strong></span>) : <em>Nothing logged yet.</em>}
         </div>
       })}
+      {sessions.length > 0 && <div className="entry-list">
+        <span className="field-label">{sessions.length} {sessions.length === 1 ? 'session' : 'sessions'} · tap one to correct it</span>
+        <div className="entry-rows">
+          {sessions.map((entry) => <EntryRow key={entry.id} entry={entry} piece={pieces[0] ? pieceOf(entry) : null} onEdit={onEdit}/>)}
+        </div>
+      </div>}
     </div>}
   </div>
 }
@@ -137,6 +205,7 @@ export default function Time({ data, actions, activeTimer }) {
   const [view, setView] = useState('tracked')
   const [query, setQuery] = useState('')
   const [manual, setManual] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [starting, setStarting] = useState(null)
   const [openId, setOpenId] = useState(null)
   const locked = Boolean(activeTimer)
@@ -151,6 +220,14 @@ export default function Time({ data, actions, activeTimer }) {
     return map
   }, [data.time_entries])
   const weekSeconds = useMemo(() => secondsThisWeek(data.time_entries), [data.time_entries])
+
+  // Correcting a session must work even when its project is finished or no longer
+  // tracked, so its own project is always one of the choices.
+  const editProjects = useMemo(() => {
+    const tracked = data.projects.filter((project) => project.track_time)
+    if (!editing || tracked.some((project) => Number(project.id) === Number(editing.project_id))) return tracked
+    return [...data.projects.filter((project) => Number(project.id) === Number(editing.project_id)), ...tracked]
+  }, [data.projects, editing])
 
   const matches = useMemo(() => ({
     tracked: (project) => isOpen(project) && Boolean(project.track_time),
@@ -208,12 +285,14 @@ export default function Time({ data, actions, activeTimer }) {
           open={openId === project.id}
           onToggle={() => setOpenId(openId === project.id ? null : project.id)}
           onStart={setStarting}
+          onEdit={setEditing}
           actions={actions}
         />)}
       </Fragment>)}
     </div> : <Empty>{emptyText}</Empty>}
 
     {starting && <StartTimer project={starting} entries={entriesBy.get(Number(starting.id)) || []} actions={actions} onClose={() => setStarting(null)}/>}
-    {manual && <ManualTime projects={data.projects.filter((project) => project.track_time)} onClose={() => setManual(false)} onSave={actions.addTime}/>}
+    {manual && <TimeDialog projects={data.projects.filter((project) => project.track_time)} actions={actions} onClose={() => setManual(false)}/>}
+    {editing && <TimeDialog entry={editing} projects={editProjects} actions={actions} onClose={() => setEditing(null)}/>}
   </section>
 }

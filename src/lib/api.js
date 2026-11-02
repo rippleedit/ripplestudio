@@ -200,6 +200,8 @@ export const api = {
   },
   async updateTimer(id, values) { return update('time_entries', id, values) },
   async addTime(values) { return insert('time_entries', values) },
+  async updateTime(id, values) { return update('time_entries', id, values) },
+  async deleteTime(id) { return remove('time_entries', id) },
 
   // Your own profile: display name and picture, like RippleReview's.
   async profile() {

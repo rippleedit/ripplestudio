@@ -29,10 +29,13 @@ export const relativeDays = (value) => (value
   ? Math.max(0, Math.floor((Date.now() - toDate(value).getTime()) / 86400000))
   : 0)
 
-export const today = () => {
-  const date = new Date()
+// The calendar day a timestamp falls on, as a date input wants it.
+export const dayValue = (value) => {
+  const date = toDate(value)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
+
+export const today = () => dayValue(new Date())
 
 export const duration = (seconds) => {
   const raw = Math.round(Number(seconds || 0))
