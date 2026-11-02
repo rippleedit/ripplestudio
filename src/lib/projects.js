@@ -86,16 +86,20 @@ export const workDate = (project) => project.paid_at || project.delivered_at || 
 
 // Time tracking --------------------------------------------------------------
 
+// [key, the label the lists use, and a spelled-out name where there is room for it].
 export const STAGES = [
   ['project_setup', 'Setup'], ['sync', 'Sync'], ['rough_cut', 'Rough cut'], ['fine_cut', 'Fine cut'], ['animation', 'Animation'],
   ['color', 'Color'], ['audio', 'Audio'], ['captions', 'Captions'], ['export_upload', 'Export'], ['revisions', 'Revisions'],
+  ['title_thumbnail_ideation', 'Ideation', 'Title & thumbnail ideation'], ['thumbnail_creation', 'Thumbnail', 'Thumbnail creation'],
 ]
 export const stageLabel = (key) => STAGES.find(([value]) => value === key)?.[1] || (key ? String(key).replaceAll('_', ' ') : 'Unstaged')
+export const stageName = (key) => STAGES.find(([value]) => value === key)?.[2] || stageLabel(key)
 
 // Every stage has its own colour, so the time bar reads at a glance.
 const STAGE_COLORS = {
   project_setup: '#9fb3c8', sync: '#6fd8e0', rough_cut: '#ff7a5e', fine_cut: '#ffb547', animation: '#c792ff',
   color: '#ff5c8a', audio: '#5fb8ff', captions: '#a8d672', export_upload: '#56dcb4', revisions: '#e6c25a',
+  title_thumbnail_ideation: '#f07ad8', thumbnail_creation: '#8d8cf2',
 }
 export const stageColor = (key) => STAGE_COLORS[key] || 'rgba(242, 240, 234, 0.28)'
 

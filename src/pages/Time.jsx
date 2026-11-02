@@ -3,11 +3,11 @@ import Dialog from '../components/Dialog.jsx'
 import Icon from '../lib/icons.jsx'
 import { Avatar, clientColor, Code, Empty, Search, Segmented, Switch } from '../components/UI.jsx'
 import { dayValue, duration, shortDate, toDate, today } from '../lib/format.js'
-import { isOpen, pieceLabel, pieceOf, secondsThisWeek, stageColor, stageLabel, STAGES, trackedPieces, trackedSeconds } from '../lib/projects.js'
+import { isOpen, pieceLabel, pieceOf, secondsThisWeek, stageColor, stageLabel, stageName, STAGES, trackedPieces, trackedSeconds } from '../lib/projects.js'
 
 const byJobCode = (a, b) => String(b.project_id || '').localeCompare(String(a.project_id || ''), undefined, { numeric: true })
 const stageTotals = (entries) => STAGES
-  .map(([stage, name]) => ({ stage, name, seconds: trackedSeconds(entries.filter((entry) => entry.stage === stage)) }))
+  .map(([stage, name]) => ({ stage, name, full: stageName(stage), seconds: trackedSeconds(entries.filter((entry) => entry.stage === stage)) }))
   .filter((row) => row.seconds !== 0)
 
 // A duration as the app writes it: hours and minutes.
@@ -101,7 +101,7 @@ function TimeDialog({ entry, projects, actions, onClose }) {
           <span className="field-label">Stage</span>
           <select className="select" value={form.stage} onChange={(event) => set({ stage: event.target.value })}>
             {!form.stage && <option value="">Unstaged</option>}
-            {STAGES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+            {STAGES.map(([key]) => <option key={key} value={key}>{stageName(key)}</option>)}
           </select>
         </label>
         <label className="field">
@@ -153,7 +153,7 @@ function StartTimer({ project, entries, actions, onClose }) {
     <div className="stage-cells">
       {STAGES.map(([stage, name]) => {
         const seconds = trackedSeconds(own.filter((entry) => entry.stage === stage))
-        return <button type="button" key={stage} className={`stage-cell ${seconds ? 'has-time' : ''}`} onClick={async () => { onClose(); await actions.startTimer(project.id, stage, piece) }}>
+        return <button type="button" key={stage} title={stageName(stage)} className={`stage-cell ${seconds ? 'has-time' : ''}`} onClick={async () => { onClose(); await actions.startTimer(project.id, stage, piece) }}>
           <span className="stage-name" style={{ '--c': stageColor(stage) }}><Icon name="stopwatch" size={13}/>{name}</span>
           <span className="stage-time">{duration(seconds)}</span>
         </button>
@@ -174,7 +174,7 @@ function TimeRow({ project, entries, view, locked, open, onToggle, onStart, onEd
       <span className="c-id"><Code project={project}/></span>
       <span className="c-title"><strong>{project.title}</strong></span>
       <span className="time-bar" aria-hidden="true">
-        {stages.map((row, index) => <i key={row.stage} title={`${row.name} · ${duration(row.seconds)}`} style={{ flexGrow: row.seconds, '--tint': stageColor(row.stage) }}/>)}
+        {stages.map((row, index) => <i key={row.stage} title={`${row.full} · ${duration(row.seconds)}`} style={{ flexGrow: row.seconds, '--tint': stageColor(row.stage) }}/>)}
       </span>
       <span className="time-total">{duration(total)}</span>
       <span className="c-action" onClick={(event) => event.stopPropagation()}>

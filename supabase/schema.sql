@@ -76,7 +76,7 @@ create table if not exists public.time_entries (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   project_id bigint not null,
   vsl_item text,
-  stage text check (stage is null or stage in ('project_setup','sync','rough_cut','fine_cut','animation','color','audio','captions','export_upload','revisions')),
+  stage text check (stage is null or stage in ('project_setup','sync','rough_cut','fine_cut','animation','color','audio','captions','export_upload','revisions','title_thumbnail_ideation','thumbnail_creation')),
   started_at timestamptz not null,
   ended_at timestamptz,
   duration_seconds integer,
