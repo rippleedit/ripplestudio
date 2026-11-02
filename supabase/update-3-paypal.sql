@@ -35,6 +35,7 @@ alter table public.paypal_transactions enable row level security;
 alter table public.paypal_senders enable row level security;
 revoke all on public.paypal_transactions, public.paypal_senders from anon;
 grant select, insert, update, delete on public.paypal_transactions, public.paypal_senders to authenticated;
+grant select, insert, update, delete on public.paypal_transactions, public.paypal_senders to service_role;
 
 drop policy if exists "owner paypal transactions" on public.paypal_transactions;
 create policy "owner paypal transactions" on public.paypal_transactions for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());

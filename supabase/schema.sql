@@ -103,6 +103,7 @@ alter table public.time_entries enable row level security;
 
 revoke all on public.profiles, public.clients, public.projects, public.payments, public.payment_projects, public.time_entries from anon;
 grant select, insert, update, delete on public.profiles, public.clients, public.projects, public.payments, public.payment_projects, public.time_entries to authenticated;
+grant select, insert, update, delete on public.profiles, public.clients, public.projects, public.payments, public.payment_projects, public.time_entries to service_role;
 grant usage, select on all sequences in schema public to authenticated;
 
 drop policy if exists "owner profile" on public.profiles;
