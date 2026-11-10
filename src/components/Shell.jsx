@@ -10,6 +10,7 @@ const links = [
   ['/time', 'Time', 'clock'],
   ['/clients', 'Clients', 'users'],
   ['/finance', 'Finance', 'wallet'],
+  ['/analytics', 'Analytics', 'chart'],
 ]
 
 export function Brand({ className = 'side-brand' }) {

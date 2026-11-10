@@ -23,6 +23,7 @@ jobs:
       - name: Check the Supabase settings are there
         run: test -n "${{ vars.SUPABASE_URL }}" && test -n "${{ vars.SUPABASE_PUBLISHABLE_KEY }}"
       - run: npm ci
+      - run: npm run test:analytics
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}

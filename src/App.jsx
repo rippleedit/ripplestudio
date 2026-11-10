@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { api, auth, demoMode } from './lib/api.js'
 import { byLane, isOpen } from './lib/projects.js'
@@ -11,6 +11,8 @@ import Clients from './pages/Clients.jsx'
 import Finance from './pages/Finance.jsx'
 import Login from './pages/Login.jsx'
 import { registerClients, Spinner } from './components/UI.jsx'
+
+const Analytics = lazy(() => import('./pages/Analytics.jsx'))
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -101,6 +103,7 @@ export default function App() {
       <Route path="/projects" element={<Projects data={data} actions={actions}/>} />
       <Route path="/time" element={<Time data={data} actions={actions} activeTimer={activeTimer}/>} />
       <Route path="/clients" element={<Clients data={data} actions={actions}/>} />
+      <Route path="/analytics" element={<Suspense fallback={<div className="page"><Spinner label="Loading analytics"/></div>}><Analytics data={data} actions={actions}/></Suspense>} />
       <Route path="/finance" element={<Finance data={data} actions={actions}/>} />
       <Route path="*" element={<Navigate to="/" replace/>} />
     </Routes>

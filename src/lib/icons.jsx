@@ -1,5 +1,6 @@
 // Lucide-style paths (ISC), inlined so there is no icon library to load.
 const paths = {
+  chart: <><path d="M3 3v18h18M7 16v-5M12 16V6M17 16v-8"/></>,
   home: <><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></>,
   projects: <><path d="M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2z"/></>,
   clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,

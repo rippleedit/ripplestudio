@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Dialog from '../components/Dialog.jsx'
 import Icon from '../lib/icons.jsx'
 import { Avatar, clientColor, Code, Empty, Search, Segmented, Switch } from '../components/UI.jsx'
@@ -191,12 +191,12 @@ function TimeRow({ project, entries, view, locked, open, onToggle, onStart, onEd
           {rows.length ? rows.map((row) => <span className="stage-chip" key={row.stage} style={{ '--c': stageColor(row.stage) }}><i className="dot"/><span>{row.name}</span><strong>{duration(row.seconds)}</strong></span>) : <em>Nothing logged yet.</em>}
         </div>
       })}
-      {sessions.length > 0 && <div className="entry-list">
-        <span className="field-label">{sessions.length} {sessions.length === 1 ? 'session' : 'sessions'} · tap one to correct it</span>
+      {sessions.length > 0 && <details className="entry-list">
+        <summary className="entry-list-toggle"><Icon name="chevron" size={14}/><span>Session log</span><span className="count">{sessions.length}</span></summary>
         <div className="entry-rows">
           {sessions.map((entry) => <EntryRow key={entry.id} entry={entry} piece={pieces[0] ? pieceOf(entry) : null} onEdit={onEdit}/>)}
         </div>
-      </div>}
+      </details>}
     </div>}
   </div>
 }
@@ -256,7 +256,7 @@ export default function Time({ data, actions, activeTimer }) {
     : view === 'tracked' ? 'No projects are being tracked. Switch one on under All open.'
       : 'Nothing here yet.'
 
-  return <section className="page">
+  return <section className="page time-page">
     <header className="page-head">
       <div>
         <h1 className="page-title">Time</h1>
@@ -273,9 +273,9 @@ export default function Time({ data, actions, activeTimer }) {
       {STAGES.map(([stage, name]) => <span key={stage} style={{ '--c': stageColor(stage) }}><i className="dot"/>{name}</span>)}
     </div>}
 
-    {groups.length ? <div className="ptable">
-      {groups.map(({ client, projects }) => <Fragment key={client?.id ?? 'none'}>
-        <div className="ptable-client"><Avatar name={client?.name} size="sm"/><strong>{client?.name || 'No client'}</strong><span>{projects.length}</span></div>
+    {groups.length ? <div className="time-client-groups">
+      {groups.map(({ client, projects }) => <section className="ptable time-client-group" key={client?.id ?? 'none'} aria-label={`${client?.name || 'No client'} time tracking`}>
+        <div className="ptable-client"><Avatar name={client?.name} size="sm"/><strong>{client?.name || 'No client'}</strong><span className="count">{projects.length}</span></div>
         {projects.map((project) => <TimeRow
           key={project.id}
           project={project}
@@ -288,7 +288,7 @@ export default function Time({ data, actions, activeTimer }) {
           onEdit={setEditing}
           actions={actions}
         />)}
-      </Fragment>)}
+      </section>)}
     </div> : <Empty>{emptyText}</Empty>}
 
     {starting && <StartTimer project={starting} entries={entriesBy.get(Number(starting.id)) || []} actions={actions} onClose={() => setStarting(null)}/>}

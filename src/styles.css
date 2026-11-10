@@ -24,7 +24,7 @@
   --font-mono: "DM Mono", "SFMono-Regular", Consolas, monospace;
   --radius-small: 3px;
   --radius-media: 6px;
-  --radius-control: 4px;
+  --radius-control: 999px;
   --fs-label: 0.75rem;
   --fs-small: 0.8125rem;
   --fs-body: 0.9375rem;
@@ -762,3 +762,19 @@ img { display: block; max-width: 100%; }
 }
 
 .home-page .job-foot { border-top: 0; }
+
+.home-heading .page-title { font-size: 1.0625rem; letter-spacing: -0.025em; }
+.home-page .block-head > .count, #project-form .choice { border-radius: 999px; }
+
+/* Time keeps each client's work in its own frame. */
+.time-client-groups { display: grid; gap: 1rem; }
+.time-client-group > .ptable-client { border-top: 0; padding-bottom: 0.75rem; }
+.time-page .time-row { border-top: 0; }
+.time-page .count, .time-page .tag, .time-page .stage-chip, .time-page .entry-piece { border-radius: 999px; }
+.time-page .entry-list { display: block; border-top: 0; padding-top: 0.5rem; }
+.entry-list-toggle { display: flex; align-items: center; gap: 0.5rem; width: fit-content; padding: 0.3rem 0; list-style: none; color: var(--white-52); font-size: 0.75rem; cursor: pointer; }
+.entry-list-toggle::-webkit-details-marker { display: none; }
+.entry-list-toggle:hover { color: var(--white); }
+.entry-list-toggle > .icon { transform: rotate(-90deg); transition: transform 180ms ease; }
+.entry-list[open] > .entry-list-toggle > .icon { transform: rotate(0); }
+.time-page .entry-rows { gap: 0; border: 0; background: transparent; margin-top: 0.45rem; }

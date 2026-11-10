@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "migrate": "node --env-file=local/migration.env scripts/migrate-sqlite.mjs",
-    "verify:anon": "node --env-file=local/supabase.env scripts/verify-anon.mjs"
+    "verify:anon": "node --env-file=local/supabase.env scripts/verify-anon.mjs",
+    "test:analytics": "TZ=Europe/Berlin node --test scripts/analytics.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
