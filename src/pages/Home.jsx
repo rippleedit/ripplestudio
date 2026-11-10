@@ -50,7 +50,7 @@ export default function Home({ data, actions, profile }) {
   const weekSeconds = useMemo(() => secondsThisWeek(data.time_entries), [data.time_entries])
   const unpaid = lanes.collect.reduce((sum, { project }) => sum + Number(project.negotiated_price || 0), 0)
 
-  return <section className="page">
+  return <section className="page home-page">
     <header className="page-head">
       <div>
         <h1 className="page-title">{greeting(now)}, {profile?.display_name || 'Razz'}</h1>
@@ -66,19 +66,19 @@ export default function Home({ data, actions, profile }) {
       <Tile value={duration(weekSeconds)} label="Tracked this week"/>
     </div>
 
-    <Block title="With you" count={lanes.you.length} hint="Your move, longest waiting first.">
+    <Block title="With you" count={lanes.you.length}>
       <Jobs items={lanes.you} clientOf={clientOf} onOpen={setEditing} empty="Nothing is waiting on you."/>
     </Block>
 
-    {lanes.collect.length > 0 && <Block title="To collect" count={lanes.collect.length} hint="Delivered, not paid yet.">
+    {lanes.collect.length > 0 && <Block title="To collect" count={lanes.collect.length}>
       <Jobs items={lanes.collect} clientOf={clientOf} onOpen={setEditing}/>
     </Block>}
 
-    <Block title="With clients" count={lanes.client.length} hint="Waiting on them.">
+    <Block title="With clients" count={lanes.client.length}>
       <Jobs items={lanes.client} clientOf={clientOf} onOpen={setEditing} empty="Nothing is out with clients."/>
     </Block>
 
-    <Block title="Money" hint="Cash collected per month, in euros.">
+    <Block title="Money">
       <div className="money">
         <div className="money-figures">
           <div className="figure"><span>{now.toLocaleDateString('en-US', { month: 'long' })} so far</span><strong>{money(months[11].value)}</strong></div>
